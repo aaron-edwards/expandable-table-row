@@ -6,15 +6,20 @@
   "author": "Aaron Edwards <edwards.aaronmark@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "test": "jest --env=jsdom",
     "start": "start-storybook -p 6006",
     "build-storybook": "build-storybook"
   },
   "devDependencies": {
     "@babel/core": "^7.5.5",
     "@storybook/addon-info": "^5.1.11",
+    "@storybook/addon-knobs": "^5.1.11",
+    "@testing-library/jest-dom": "^4.0.0",
+    "@testing-library/react": "^9.1.1",
     "@types/faker": "^4.1.5",
     "@types/jest": "^24.0.17",
     "@types/react-dom": "^16.8.5",
+    "@types/storybook__addon-knobs": "^5.0.3",
     "@types/storybook__react": "^4.0.2",
     "awesome-typescript-loader": "^5.2.1",
     "babel-loader": "^8.0.6",
@@ -28,6 +33,7 @@
   },
   "dependencies": {
     "@material-ui/core": "^4.3.2",
+    "@material-ui/icons": "^4.2.1",
     "@storybook/react": "^5.1.11",
     "@types/react": "^16.9.1",
     "react": "^16.9.0"
