@@ -1,11 +1,10 @@
 import React from 'react';
-import ExpandableRow from '../expandable-row';
-import {render, fireEvent} from '@testing-library/react'
-import '@testing-library/jest-dom/extend-expect'
+import { render } from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
 import { TableCell, Table, TableBody } from '@material-ui/core';
+import ExpandableRow from '../expandable-row';
 
-jest.mock('../expand-indicator', () => ({expanded}: {expanded: boolean}) => expanded ? "Collapse" : "Expand");
-
+jest.mock('../expand-indicator', () => ({ expanded }: {expanded: boolean}) => (expanded ? 'Collapse' : 'Expand'));
 
 const inTable = (component: React.ReactNode) => (
   <Table>
@@ -13,51 +12,66 @@ const inTable = (component: React.ReactNode) => (
       {component}
     </TableBody>
   </Table>
-); 
+);
 
-describe("<ExpandableRow />",  () => {
-  const PanelContent = () => "Panel Content";
-  it('should render the children', async () => {
-    const { findByText } = render(inTable(
-      <ExpandableRow expanded={PanelContent}>
-        <TableCell>Cell 1</TableCell>
-      </ExpandableRow>
-    ));
-    expect(await findByText("Cell 1")).toBeVisible()
-  });
+describe('<ExpandableRow />', () => {
+  const DetailsPanel = jest.fn(() => <span>Details</span>);
 
-  it('should render an indicator on the left', () => {
+  it('Should render the children cells in a table row', () => {
     const { container } = render(inTable(
-      <ExpandableRow expanded={PanelContent}>
+      <ExpandableRow
+        detailsPanel={DetailsPanel}
+      >
         <TableCell>Cell 1</TableCell>
-      </ExpandableRow>
+      </ExpandableRow>,
     ));
-    const expandCell = container.querySelectorAll('td')[0];
-    expect(expandCell).toBeVisible();
-    expect(expandCell).toHaveTextContent("Expand");
+
+    const rows = container.querySelectorAll('tr');
+    expect(rows).toHaveLength(1);
+    const cells = rows[0].querySelectorAll('td');
+    expect(cells).toHaveLength(1);
+    expect(cells[0]).toHaveTextContent('Cell 1');
   });
 
-  it('should not display the expandable panel by default', async () => {
+  it('should not render the details panel if not expanded', async () => {
     const { queryByText } = render(inTable(
-      <ExpandableRow expanded={PanelContent}>
+      <ExpandableRow
+        detailsPanel={DetailsPanel}
+      >
         <TableCell>Cell 1</TableCell>
-      </ExpandableRow>
+      </ExpandableRow>,
     ));
-    expect(await queryByText("Panel Content")).toBeNull();
+
+    expect(await queryByText('Details')).toBeNull();
   });
 
-  it('should display panel when indicator is clicked', async () => {
-    const { queryByText } = render(inTable(
-      <ExpandableRow expanded={PanelContent}>
+  it('should render the details panel if expanded', async () => {
+    const { container } = render(inTable(
+      <ExpandableRow
+        expanded
+        detailsPanel={DetailsPanel}
+      >
         <TableCell>Cell 1</TableCell>
-      </ExpandableRow>
+        <TableCell>Cell 2</TableCell>
+      </ExpandableRow>,
     ));
-    
-    fireEvent.click(queryByText("Expand")!);
 
-    const panel = await queryByText("Panel Content")
+    const rows = container.querySelectorAll('tr');
+    expect(rows).toHaveLength(2);
+    const cells = rows[1].querySelectorAll('td');
+    expect(cells).toHaveLength(1);
+    expect(cells[0]).toHaveTextContent('Details');
+    expect(cells[0]).toHaveAttribute('colspan', '2');
+  });
 
-    expect(panel).not.toBeNull();
-    expect(panel!.parentElement).toHaveAttribute('colspan', "2");
+  it('should animate the opening of the row', () => {
+    const { container } = render(inTable(
+      <ExpandableRow
+        detailsPanel={DetailsPanel}
+      >
+        <TableCell>Cell 1</TableCell>
+        <TableCell>Cell 2</TableCell>
+      </ExpandableRow>,
+    ));
   });
 });

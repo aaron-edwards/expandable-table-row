@@ -1,32 +1,77 @@
-import React, { useState } from 'react';
+import React, { ReactNode, ReactElement, useState } from 'react';
 import TableRow, { TableRowProps } from '@material-ui/core/TableRow';
-import TableCell from '@material-ui/core/TableCell';
-import ExpandIndicator from './expand-indicator';
-import Collapse from '@material-ui/core/Collapse';
+import { TableCell, Collapse } from '@material-ui/core';
+import { makeStyles } from '@material-ui/styles';
+
+type AnimationState = 'Collapsed' | 'Collapsing' | 'Expanded' | 'Expanding';
 
 type ExpandableRowProps = {
-  children?: React.ReactNode,
-  expanded?: React.ReactNode
+  children?: ReactNode,
+  expanded: boolean,
+  detailsPanel: (props: {animationState: AnimationState}) => ReactElement;
 } & TableRowProps;
 
-export default ({ children, expanded, ...tableRowProps}: ExpandableRowProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const cellCount = React.Children.count(children);
+const cssNames = (names: (string|undefined)[]) => names.filter(n => n !== undefined).join(' ');
+
+const useStyles = makeStyles({
+  mainExpanded: {
+    '& td': {
+      borderBottom: 'none',
+    },
+  },
+  details: {
+    '& td': {
+      transition: '0.1s all ease',
+    },
+  },
+  detailsAnimating: {
+    '& td': {
+      paddingBottom: 0,
+      paddingTop: 0,
+    },
+  },
+});
+
+const ExpandableRow = ({
+  children, detailsPanel, expanded, ...tableRowProps
+}: ExpandableRowProps) => {
+  const DetailsPanelComponent = detailsPanel;
+  const colSpan = React.Children.count(children);
+  const [animationState, setAnimationState] = useState<AnimationState>(expanded ? 'Expanded' : 'Collapsed');
+  const { mainExpanded, details, detailsAnimating } = useStyles();
+  const animating = animationState === 'Collapsing' || animationState === 'Expanding';
+  const displayed = (expanded || animating);
+
   return (
     <>
-      <TableRow {...tableRowProps}>
-        <>
-          <TableCell onClick={() => setIsExpanded(!isExpanded)}>
-            <ExpandIndicator expanded={isExpanded} />
-          </TableCell>
-          {children}
-        </>
+      <TableRow className={cssNames([displayed ? mainExpanded : undefined])} {...tableRowProps}>
+        { children }
       </TableRow>
-      <Collapse in={isExpanded} component={TableRow} unmountOnExit mountOnEnter>
-        <TableCell colSpan={cellCount+1}>
-          {expanded}
+      { (expanded || animationState !== 'Collapsed')
+      && (
+      <TableRow className={cssNames([details, !expanded ? detailsAnimating : undefined])}>
+        <TableCell colSpan={colSpan}>
+          <Collapse
+            appear
+            in={expanded}
+            onEntered={() => setAnimationState('Expanded')}
+            onExited={() => setAnimationState('Collapsed')}
+            onEntering={() => setAnimationState('Expanding')}
+            onExit={() => setAnimationState('Collapsing')}
+            exit
+          >
+            <DetailsPanelComponent animationState={animationState} />
+          </Collapse>
         </TableCell>
-      </Collapse>
+      </TableRow>
+      )
+  }
     </>
-  )
+  );
 };
+
+ExpandableRow.defaultProps = {
+  expanded: false,
+};
+
+export default ExpandableRow;
